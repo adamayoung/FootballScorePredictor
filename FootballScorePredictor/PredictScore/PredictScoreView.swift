@@ -4,16 +4,16 @@ struct PredictScoreView: View {
 
     @StateObject var viewModel = PredictScoreViewModel()
 
-    private var predictedScoreText: String {
-        guard let predictedScore = viewModel.predictedScore else {
-            return ""
-        }
-
-        return "\(predictedScore.home) - \(predictedScore.away)"
+    private var gridHorizontalSpacing: CGFloat {
+        #if os(macOS)
+        return 20
+        #else
+        return 70
+        #endif
     }
 
     var body: some View {
-        Grid(alignment: .top, horizontalSpacing: 20, verticalSpacing: 20) {
+        Grid(alignment: .top, horizontalSpacing: gridHorizontalSpacing, verticalSpacing: 20) {
             GridRow {
                 Text("Home")
                     .font(.title)
@@ -23,48 +23,19 @@ struct PredictScoreView: View {
             }
 
             GridRow {
-                Picker("Home", selection: $viewModel.homeTeamSelection) {
-                    ForEach(viewModel.homeTeams) { footballTeam in
-                        Text(footballTeam.name)
-                            .tag(footballTeam)
-                    }
-                }
-                .labelsHidden()
+                teamPicker("Home", selection: $viewModel.homeTeamSelection, from: viewModel.homeTeams)
 
-                Picker("Away", selection: $viewModel.awayTeamSelection) {
-                    ForEach(viewModel.awayTeams) { footballTeam in
-                        Text(footballTeam.name)
-                            .tag(footballTeam)
-                    }
-                }
-                .labelsHidden()
+                teamPicker("Away", selection: $viewModel.awayTeamSelection, from: viewModel.awayTeams)
             }
 
             GridRow {
-                Image(viewModel.homeTeamSelection.name)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 150)
+                crest(for: viewModel.homeTeamSelection)
 
-                Image(viewModel.awayTeamSelection.name)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 150)
+                crest(for: viewModel.awayTeamSelection)
             }
 
             GridRow {
-                VStack(alignment: .center) {
-                    Text(verbatim: " \(predictedScoreText) ")
-                        .font(.system(size: 60))
-                        .bold()
-                        .foregroundColor(.primary)
-
-                    Text("Prediction")
-                        .font(.body)
-                        .foregroundColor(.gray)
-                }
-                .gridCellColumns(2)
-                .opacity(predictedScoreText.isEmpty ? 0 : 1)
+                predicatedScoreRow(for: viewModel.predictedScore)
             }
         }
         .padding()
@@ -79,6 +50,58 @@ struct PredictScoreView: View {
         .onAppear {
             viewModel.loadData()
         }
+    }
+
+    private func teamPicker(_ titleKey: LocalizedStringKey, selection: Binding<FootballTeam?>,
+                            from footballTeams: [FootballTeam]) -> some View {
+        Picker(titleKey, selection: selection) {
+            Text(verbatim: "")
+                .tag(nil as FootballTeam?)
+
+            ForEach(footballTeams) { footballTeam in
+                Text(footballTeam.name)
+                    .tag(footballTeam as FootballTeam?)
+            }
+        }
+        .labelsHidden()
+    }
+
+    @ViewBuilder
+    private func crest(for footballTeam: FootballTeam?) -> some View {
+        #if os(macOS)
+        let imageHeight: CGFloat = 150
+        #else
+        let imageHeight: CGFloat = 100
+        #endif
+
+        Image(footballTeam?.name ?? "")
+            .resizable()
+            .scaledToFit()
+            .frame(width: imageHeight, height: imageHeight)
+    }
+
+    @ViewBuilder
+    private func predicatedScoreRow(for predictedScore: PredictScoreViewModel.PredictedScore?) -> some View {
+        let text: String = {
+            guard let predictedScore = viewModel.predictedScore else {
+                return ""
+            }
+
+            return "\(predictedScore.home) - \(predictedScore.away)"
+        }()
+
+        VStack(alignment: .center) {
+            Text(verbatim: " \(text) ")
+                .font(.system(size: 60))
+                .bold()
+                .foregroundColor(.primary)
+
+            Text("Prediction")
+                .font(.body)
+                .foregroundColor(.gray)
+        }
+        .gridCellColumns(2)
+        .opacity(text.isEmpty ? 0 : 1)
     }
 
 }

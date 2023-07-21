@@ -7,7 +7,9 @@ struct FootballScorePredictorApp: App {
         WindowGroup {
             ContentView()
         }
+        #if os(macOS)
         .defaultSize(width: 600, height: 500)
+        #endif
     }
 
 }

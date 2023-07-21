@@ -6,8 +6,8 @@ final class PredictScoreViewModel: ObservableObject {
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var allFootballTeams: [FootballTeam] = []
     @Published private(set) var predictedScore: PredictedScore?
-    @Published var homeTeamSelection: FootballTeam = FootballTeam(name: "")
-    @Published var awayTeamSelection: FootballTeam = FootballTeam(name: "")
+    @Published var homeTeamSelection: FootballTeam?
+    @Published var awayTeamSelection: FootballTeam?
 
     var homeTeams: [FootballTeam] {
         allFootballTeams.filter { $0 != awayTeamSelection }
@@ -50,6 +50,7 @@ final class PredictScoreViewModel: ObservableObject {
             !homeTeam.name.isEmpty,
             !awayTeam.name.isEmpty
         else {
+            self.predictedScore = nil
             return
         }
 
